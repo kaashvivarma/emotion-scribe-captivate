@@ -74,22 +74,60 @@ const ImageCapture: React.FC<ImageCaptureProps> = ({
   };
 
   const drawFacialKeypoints = (ctx: CanvasRenderingContext2D) => {
-    if (!facialKeypoints) return;
+    if (!facialKeypoints || !facialKeypoints.length) return;
     
+    // Scale factor - if the canvas is being displayed at a different size than its internal dimensions
+    const scaleX = ctx.canvas.clientWidth / ctx.canvas.width;
+    const scaleY = ctx.canvas.clientHeight / ctx.canvas.height;
+    
+    ctx.save();
     ctx.strokeStyle = '#4ade80'; // Green color
     ctx.fillStyle = '#4ade80';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 2;
     
     // Draw lines connecting the 15 key facial points
     if (facialKeypoints.length >= 15) {
       ctx.beginPath();
-      for (let i = 0; i < 15; i++) {
-        const [x, y] = facialKeypoints[i];
-        if (i === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
+      
+      // Draw face outline connecting points (simplified example)
+      // You'll want to customize this based on your specific keypoint indices
+      const faceOutlineIndices = [0, 1, 12, 13, 14, 9, 0]; // Example path
+      
+      faceOutlineIndices.forEach((idx, i) => {
+        if (idx < facialKeypoints.length) {
+          const [x, y] = facialKeypoints[idx];
+          if (i === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
         }
+      });
+      ctx.stroke();
+      
+      // Draw eyes
+      ctx.beginPath();
+      if (facialKeypoints[0] && facialKeypoints[5]) {
+        ctx.moveTo(facialKeypoints[0][0], facialKeypoints[0][1]);
+        ctx.lineTo(facialKeypoints[5][0], facialKeypoints[5][1]);
+      }
+      ctx.stroke();
+      
+      ctx.beginPath();
+      if (facialKeypoints[1] && facialKeypoints[6]) {
+        ctx.moveTo(facialKeypoints[1][0], facialKeypoints[1][1]);
+        ctx.lineTo(facialKeypoints[6][0], facialKeypoints[6][1]);
+      }
+      ctx.stroke();
+      
+      // Draw mouth
+      ctx.beginPath();
+      if (facialKeypoints[3] && facialKeypoints[4]) {
+        ctx.moveTo(facialKeypoints[3][0], facialKeypoints[3][1]);
+        ctx.lineTo(facialKeypoints[7][0], facialKeypoints[7][1]);
+        ctx.lineTo(facialKeypoints[4][0], facialKeypoints[4][1]);
+        ctx.lineTo(facialKeypoints[8][0], facialKeypoints[8][1]);
+        ctx.lineTo(facialKeypoints[3][0], facialKeypoints[3][1]);
       }
       ctx.stroke();
     }
@@ -97,21 +135,34 @@ const ImageCapture: React.FC<ImageCaptureProps> = ({
     // Draw points
     facialKeypoints.forEach(([x, y]) => {
       ctx.beginPath();
-      ctx.arc(x, y, 1, 0, 2 * Math.PI);
+      ctx.arc(x, y, 3, 0, 2 * Math.PI);
       ctx.fill();
     });
+    
+    ctx.restore();
   };
 
   useEffect(() => {
-    if (capturedImage && facialKeypoints && canvasRef.current) {
+    if (capturedImage && canvasRef.current) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       
       if (ctx) {
         const img = new Image();
         img.onload = () => {
+          // Clear the canvas before drawing
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          
+          // Draw the captured image
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          drawFacialKeypoints(ctx);
+          
+          // If we have keypoints, draw them
+          if (facialKeypoints && facialKeypoints.length > 0) {
+            console.log("Drawing facial keypoints:", facialKeypoints);
+            drawFacialKeypoints(ctx);
+          } else {
+            console.log("No facial keypoints to draw");
+          }
         };
         img.src = capturedImage;
       }
