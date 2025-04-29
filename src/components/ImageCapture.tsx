@@ -3,16 +3,14 @@ import React, { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, RefreshCw } from "lucide-react";
 
-interface VideoCaptureProps {
+interface ImageCaptureProps {
   onCapture: (imageData: string) => void;
-  isRecording: boolean;
   capturedImage: string | null;
   facialKeypoints: number[][] | null;
 }
 
-const VideoCapture: React.FC<VideoCaptureProps> = ({ 
+const ImageCapture: React.FC<ImageCaptureProps> = ({ 
   onCapture, 
-  isRecording,
   capturedImage,
   facialKeypoints
 }) => {
@@ -53,8 +51,8 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
     };
   }, [capturedImage]);
 
-  useEffect(() => {
-    if (isRecording && videoRef.current && canvasRef.current) {
+  const captureImage = () => {
+    if (videoRef.current && canvasRef.current) {
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
       
@@ -62,9 +60,14 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
         context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
         const imageData = canvas.toDataURL('image/png');
         onCapture(imageData);
+        
+        // Stop the camera stream after capture
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
       }
     }
-  }, [isRecording, onCapture]);
+  };
 
   const handleRetake = () => {
     onCapture("");
@@ -77,43 +80,19 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
     ctx.fillStyle = '#4ade80';
     ctx.lineWidth = 1;
     
-    // Connect points with lines to form facial features
-    const features = [
-      // Jaw line
-      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-      // Right eyebrow
-      [17, 18, 19, 20, 21],
-      // Left eyebrow
-      [22, 23, 24, 25, 26],
-      // Nose bridge
-      [27, 28, 29, 30],
-      // Lower nose
-      [30, 31, 32, 33, 34, 35],
-      // Right eye
-      [36, 37, 38, 39, 40, 41, 36],
-      // Left eye
-      [42, 43, 44, 45, 46, 47, 42],
-      // Outer lip
-      [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 48],
-      // Inner lip
-      [60, 61, 62, 63, 64, 65, 66, 67, 60]
-    ];
-    
-    features.forEach(feature => {
+    // Draw lines connecting the 15 key facial points
+    if (facialKeypoints.length >= 15) {
       ctx.beginPath();
-      for (let i = 0; i < feature.length; i++) {
-        const idx = feature[i];
-        if (facialKeypoints[idx]) {
-          const [x, y] = facialKeypoints[idx];
-          if (i === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
+      for (let i = 0; i < 15; i++) {
+        const [x, y] = facialKeypoints[i];
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
         }
       }
       ctx.stroke();
-    });
+    }
     
     // Draw points
     facialKeypoints.forEach(([x, y]) => {
@@ -143,13 +122,20 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
     <div className="flex flex-col items-center">
       <div className="bg-black relative w-96 h-96 overflow-hidden rounded-lg">
         {!capturedImage ? (
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover"
-          />
+          <>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+              <Button onClick={captureImage} className="gap-2">
+                <Camera className="h-4 w-4" /> Capture Image
+              </Button>
+            </div>
+          </>
         ) : null}
         
         <canvas
@@ -173,7 +159,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
           </Button>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Video feed will be captured when recording starts
+            Please capture a 96x96 image for facial emotion analysis
           </p>
         )}
       </div>
@@ -181,4 +167,4 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
   );
 };
 
-export default VideoCapture;
+export default ImageCapture;

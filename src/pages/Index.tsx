@@ -6,11 +6,10 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
-import { Mic, Camera, Upload, Loader2 } from "lucide-react";
-import VideoCapture from "@/components/VideoCapture";
+import { Mic, Camera, Loader2 } from "lucide-react";
+import ImageCapture from "@/components/ImageCapture";
 import AudioRecorder from "@/components/AudioRecorder";
 import EmotionResults from "@/components/EmotionResults";
-import ModelUploader from "@/components/ModelUploader";
 
 type EmotionData = {
   facial: string | null;
@@ -36,7 +35,6 @@ const Index = () => {
     },
   });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("capture");
 
   const handleImageCapture = (imageData: string) => {
@@ -65,7 +63,7 @@ const Index = () => {
   };
 
   const handleAnalyzeData = async () => {
-    if (!capturedImage || !audioBlob || !isModelLoaded) {
+    if (!capturedImage || !audioBlob) {
       toast({
         title: "Missing data",
         description: "Please capture an image and record audio before analyzing.",
@@ -81,7 +79,8 @@ const Index = () => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Simulate facial keypoints (would be real data from model)
-      const mockKeypoints = Array.from({ length: 68 }, () => [
+      // Here you'll use the uploaded model to get actual keypoints
+      const mockKeypoints = Array.from({ length: 15 }, () => [
         Math.random() * 96,
         Math.random() * 96,
       ]);
@@ -117,16 +116,6 @@ const Index = () => {
     }
   };
 
-  const handleModelUpload = (status: boolean) => {
-    setIsModelLoaded(status);
-    if (status) {
-      toast({
-        title: "Models loaded",
-        description: "All AI models have been successfully loaded.",
-      });
-    }
-  };
-
   useEffect(() => {
     if (isRecording) {
       const intervalId = setInterval(() => {
@@ -153,21 +142,19 @@ const Index = () => {
         </p>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-3 mb-8">
+          <TabsList className="grid grid-cols-2 mb-8">
             <TabsTrigger value="capture">Capture & Analyze</TabsTrigger>
             <TabsTrigger value="results">Results</TabsTrigger>
-            <TabsTrigger value="models">Model Management</TabsTrigger>
           </TabsList>
 
           <TabsContent value="capture" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card className="p-4">
                 <h2 className="text-xl font-semibold mb-4 flex items-center">
-                  <Camera className="mr-2 h-5 w-5" /> Video Capture
+                  <Camera className="mr-2 h-5 w-5" /> Image Capture (96x96)
                 </h2>
-                <VideoCapture 
+                <ImageCapture 
                   onCapture={handleImageCapture} 
-                  isRecording={isRecording}
                   capturedImage={capturedImage}
                   facialKeypoints={facialKeypoints}
                 />
@@ -175,7 +162,7 @@ const Index = () => {
 
               <Card className="p-4">
                 <h2 className="text-xl font-semibold mb-4 flex items-center">
-                  <Mic className="mr-2 h-5 w-5" /> Audio Recording
+                  <Mic className="mr-2 h-5 w-5" /> Audio Recording (10s)
                 </h2>
                 <AudioRecorder 
                   isRecording={isRecording}
@@ -207,7 +194,7 @@ const Index = () => {
                   <Button 
                     onClick={handleStartRecording} 
                     className="gap-2"
-                    disabled={!isModelLoaded}
+                    disabled={isRecording}
                   >
                     <Mic className="h-4 w-4" /> Start Recording (10s)
                   </Button>
@@ -216,7 +203,7 @@ const Index = () => {
                     onClick={handleAnalyzeData} 
                     variant="secondary" 
                     className="gap-2"
-                    disabled={!capturedImage || !audioBlob || isAnalyzing || !isModelLoaded}
+                    disabled={!capturedImage || !audioBlob || isAnalyzing}
                   >
                     {isAnalyzing ? (
                       <>
@@ -228,12 +215,6 @@ const Index = () => {
                       </>
                     )}
                   </Button>
-                  
-                  {!isModelLoaded && (
-                    <p className="text-sm text-muted-foreground">
-                      Please upload or select AI models first
-                    </p>
-                  )}
                 </>
               )}
             </div>
@@ -246,11 +227,35 @@ const Index = () => {
               capturedImage={capturedImage}
             />
           </TabsContent>
-          
-          <TabsContent value="models">
-            <ModelUploader onModelsLoaded={handleModelUpload} />
-          </TabsContent>
         </Tabs>
+      </div>
+      
+      <div className="container max-w-5xl py-8">
+        <div className="bg-black/20 rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4">Model Upload Instructions</h2>
+          <p className="mb-3">Please add your trained models to the following directory structure in the public folder:</p>
+          <pre className="bg-black/40 p-4 rounded-lg overflow-auto text-sm mb-6">
+{`public/models/
+|
+|_keyfacial/
+|   |_best_model.h5
+|   |_model_keyfacial_architecture.json
+|
+|_facial_emotion/
+|   |_facial.weights.h5
+|   |_model_facial_architecture.json
+|
+|_speech_emotion/
+    |_mlp_model.weights.h5
+    |_mlp_mlp_architecture.json
+    |_xgb_model.json
+    |_stdscaler.pkl
+    |_mood_encode.pkl`}
+          </pre>
+          <p className="text-muted-foreground text-sm">
+            After uploading your models to the public folder, the application will attempt to load them automatically.
+          </p>
+        </div>
       </div>
     </div>
   );
