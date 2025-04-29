@@ -23,6 +23,7 @@ export async function loadModels(): Promise<ModelLoadingStatus> {
     
     // Load key facial points model
     try {
+      console.log('Loading key facial points model...');
       const keyfacialModel = await tf.loadLayersModel('/models/keyfacial/model_keyfacial_architecture.json');
       status.keyfacial = true;
       console.log('Key facial points model loaded successfully');
@@ -36,6 +37,7 @@ export async function loadModels(): Promise<ModelLoadingStatus> {
     
     // Load facial emotion model
     try {
+      console.log('Loading facial emotion model...');
       const facialEmotionModel = await tf.loadLayersModel('/models/facial_emotion/model_facial_architecture.json');
       status.facialEmotion = true;
       console.log('Facial emotion model loaded successfully');
@@ -48,18 +50,18 @@ export async function loadModels(): Promise<ModelLoadingStatus> {
     }
     
     // For speech emotion detection, we'll need to load multiple files for the ensemble model
-    // This is a placeholder - in a real implementation, you'd need a custom loader for XGBoost models
-    // and for loading the .pkl files (which would typically need to be converted to JSON format)
     try {
-      const mlpModel = await tf.loadLayersModel('/models/speech_emotion/mlp_mlp_architecture.json');
+      console.log('Loading speech emotion MLP model...');
+      // Correcting the path to match the model_mlp_architecture.json file
+      const mlpModel = await tf.loadLayersModel('/models/speech_emotion/model_mlp_architecture.json');
       status.speechEmotion = true;
       console.log('Speech emotion MLP model loaded successfully');
       
       // Store the model in window object for later use
       (window as any).speechEmotionMlpModel = mlpModel;
       
-      // Note: The XGBoost model would need a custom loader or be converted to a format 
-      // that can be loaded in the browser
+      // Note: For XGBoost models, we would need a different approach
+      // since tf.loadLayersModel only works for TensorFlow/Keras models
       
     } catch (error) {
       console.error('Failed to load speech emotion models:', error);

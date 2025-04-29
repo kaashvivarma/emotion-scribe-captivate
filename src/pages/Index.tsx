@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { Mic, Camera, Loader2 } from "lucide-react";
 import ImageCapture from "@/components/ImageCapture";
 import AudioRecorder from "@/components/AudioRecorder";
 import EmotionResults from "@/components/EmotionResults";
+import { predictFacialKeypoints, predictFacialEmotion, predictSpeechEmotion } from "@/utils/modelLoader";
 
 type EmotionData = {
   facial: string | null;
@@ -39,7 +39,8 @@ const Index = () => {
 
   const handleImageCapture = (imageData: string) => {
     setCapturedImage(imageData);
-    // In a real implementation, this would trigger facial analysis
+    setFacialKeypoints(null); // Reset keypoints when capturing a new image
+    // Don't analyze immediately, wait for the user to press the analyze button
   };
 
   const handleAudioRecorded = (blob: Blob) => {
@@ -75,28 +76,26 @@ const Index = () => {
     setIsAnalyzing(true);
 
     try {
-      // Simulate model processing time
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Get facial keypoints from the model
+      const keypoints = await predictFacialKeypoints(capturedImage);
+      setFacialKeypoints(keypoints);
+      console.log("Facial keypoints detected:", keypoints);
 
-      // Simulate facial keypoints (would be real data from model)
-      // Here you'll use the uploaded model to get actual keypoints
-      const mockKeypoints = Array.from({ length: 15 }, () => [
-        Math.random() * 96,
-        Math.random() * 96,
-      ]);
-      setFacialKeypoints(mockKeypoints);
+      // Get facial emotion from the model
+      const facialEmotionResult = await predictFacialEmotion(capturedImage);
+      console.log("Facial emotion detected:", facialEmotionResult);
 
-      // Simulate emotion results (would be real data from model)
-      const emotions = ["happy", "sad", "angry", "surprised", "neutral", "fearful"];
-      const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
-      const randomEmotion2 = emotions[Math.floor(Math.random() * emotions.length)];
-      
+      // Get speech emotion from the model
+      const speechEmotionResult = await predictSpeechEmotion(audioBlob);
+      console.log("Speech emotion detected:", speechEmotionResult);
+
+      // Update the emotion data
       setEmotionData({
-        facial: randomEmotion,
-        speech: randomEmotion2,
+        facial: facialEmotionResult.emotion,
+        speech: speechEmotionResult.emotion,
         confidence: {
-          facial: Math.random() * 0.5 + 0.5, // Random confidence between 0.5 and 1
-          speech: Math.random() * 0.5 + 0.5,
+          facial: facialEmotionResult.confidence,
+          speech: speechEmotionResult.confidence,
         },
       });
 
