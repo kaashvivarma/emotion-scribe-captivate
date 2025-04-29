@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -74,37 +75,88 @@ const Index = () => {
     }
 
     setIsAnalyzing(true);
+    let hasErrors = false;
 
     try {
-      // Get facial keypoints from the model
-      const keypoints = await predictFacialKeypoints(capturedImage);
-      setFacialKeypoints(keypoints);
-      console.log("Facial keypoints detected:", keypoints);
-
-      // Get facial emotion from the model
-      const facialEmotionResult = await predictFacialEmotion(capturedImage);
-      console.log("Facial emotion detected:", facialEmotionResult);
-
-      // Get speech emotion from the model
-      const speechEmotionResult = await predictSpeechEmotion(audioBlob);
-      console.log("Speech emotion detected:", speechEmotionResult);
-
-      // Update the emotion data
-      setEmotionData({
-        facial: facialEmotionResult.emotion,
-        speech: speechEmotionResult.emotion,
+      // Initialize with empty results in case any step fails
+      let newEmotionData: EmotionData = {
+        facial: null,
+        speech: null,
         confidence: {
-          facial: facialEmotionResult.confidence,
-          speech: speechEmotionResult.confidence,
+          facial: null,
+          speech: null,
         },
-      });
+      };
+      
+      // Get facial keypoints from the model
+      try {
+        const keypoints = await predictFacialKeypoints(capturedImage);
+        setFacialKeypoints(keypoints);
+        console.log("Facial keypoints detected:", keypoints);
+      } catch (error) {
+        console.error("Error detecting facial keypoints:", error);
+        toast({
+          title: "Keypoint detection failed",
+          description: "Could not detect facial keypoints. Please try again with a clearer image.",
+          variant: "destructive",
+        });
+        hasErrors = true;
+      }
+      
+      // Get facial emotion from the model
+      try {
+        const facialEmotionResult = await predictFacialEmotion(capturedImage);
+        console.log("Facial emotion detected:", facialEmotionResult);
+        newEmotionData.facial = facialEmotionResult.emotion;
+        newEmotionData.confidence.facial = facialEmotionResult.confidence;
+      } catch (error) {
+        console.error("Error detecting facial emotion:", error);
+        toast({
+          title: "Facial emotion detection failed",
+          description: "Could not analyze facial emotion. Please try again.",
+          variant: "destructive",
+        });
+        hasErrors = true;
+      }
+      
+      // Get speech emotion from the model
+      try {
+        const speechEmotionResult = await predictSpeechEmotion(audioBlob);
+        console.log("Speech emotion detected:", speechEmotionResult);
+        newEmotionData.speech = speechEmotionResult.emotion;
+        newEmotionData.confidence.speech = speechEmotionResult.confidence;
+      } catch (error) {
+        console.error("Error detecting speech emotion:", error);
+        toast({
+          title: "Speech emotion detection failed",
+          description: "Could not analyze speech emotion. Please try again.",
+          variant: "destructive",
+        });
+        hasErrors = true;
+      }
 
-      toast({
-        title: "Analysis complete",
-        description: "Emotion analysis has been completed successfully.",
-      });
+      // Update the emotion data even if there were some errors
+      setEmotionData(newEmotionData);
+      
+      // Switch to results tab if we have at least some data
+      if (newEmotionData.facial || newEmotionData.speech) {
+        setActiveTab("results");
+      }
+
+      if (hasErrors) {
+        toast({
+          title: "Analysis partially complete",
+          description: "Some parts of the analysis couldn't be completed. See details in the console.",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Analysis complete",
+          description: "Emotion analysis has been completed successfully.",
+        });
+      }
     } catch (error) {
-      console.error("Analysis error:", error);
+      console.error("General analysis error:", error);
       toast({
         title: "Analysis failed",
         description: "There was an error analyzing the data. Please try again.",
