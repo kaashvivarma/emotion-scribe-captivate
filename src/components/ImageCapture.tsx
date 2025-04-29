@@ -85,54 +85,7 @@ const ImageCapture: React.FC<ImageCaptureProps> = ({
     ctx.fillStyle = '#4ade80';
     ctx.lineWidth = 2;
     
-    // Draw lines connecting the 15 key facial points
-    if (facialKeypoints.length >= 15) {
-      ctx.beginPath();
-      
-      // Draw face outline connecting points (simplified example)
-      // You'll want to customize this based on your specific keypoint indices
-      const faceOutlineIndices = [0, 1, 12, 13, 14, 9, 0]; // Example path
-      
-      faceOutlineIndices.forEach((idx, i) => {
-        if (idx < facialKeypoints.length) {
-          const [x, y] = facialKeypoints[idx];
-          if (i === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
-        }
-      });
-      ctx.stroke();
-      
-      // Draw eyes
-      ctx.beginPath();
-      if (facialKeypoints[0] && facialKeypoints[5]) {
-        ctx.moveTo(facialKeypoints[0][0], facialKeypoints[0][1]);
-        ctx.lineTo(facialKeypoints[5][0], facialKeypoints[5][1]);
-      }
-      ctx.stroke();
-      
-      ctx.beginPath();
-      if (facialKeypoints[1] && facialKeypoints[6]) {
-        ctx.moveTo(facialKeypoints[1][0], facialKeypoints[1][1]);
-        ctx.lineTo(facialKeypoints[6][0], facialKeypoints[6][1]);
-      }
-      ctx.stroke();
-      
-      // Draw mouth
-      ctx.beginPath();
-      if (facialKeypoints[3] && facialKeypoints[4]) {
-        ctx.moveTo(facialKeypoints[3][0], facialKeypoints[3][1]);
-        ctx.lineTo(facialKeypoints[7][0], facialKeypoints[7][1]);
-        ctx.lineTo(facialKeypoints[4][0], facialKeypoints[4][1]);
-        ctx.lineTo(facialKeypoints[8][0], facialKeypoints[8][1]);
-        ctx.lineTo(facialKeypoints[3][0], facialKeypoints[3][1]);
-      }
-      ctx.stroke();
-    }
-    
-    // Draw points
+    // Draw only the dots for keypoints - no lines connecting them
     facialKeypoints.forEach(([x, y]) => {
       ctx.beginPath();
       ctx.arc(x, y, 3, 0, 2 * Math.PI);

@@ -75,26 +75,13 @@ const EmotionResults: React.FC<EmotionResultsProps> = ({
       img.onload = () => {
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         
-        // Draw points and lines
-        ctx.strokeStyle = '#4ade80'; // Green color
-        ctx.fillStyle = '#4ade80';
-        ctx.lineWidth = 1;
-        
-        // Draw lines connecting points
-        ctx.beginPath();
-        facialKeypoints.forEach((point, i) => {
-          if (i === 0) {
-            ctx.moveTo(point[0], point[1]);
-          } else {
-            ctx.lineTo(point[0], point[1]);
-          }
-        });
-        ctx.stroke();
+        // Draw only points, no lines
+        ctx.fillStyle = '#4ade80'; // Green color
         
         // Draw points
         facialKeypoints.forEach(([x, y]) => {
           ctx.beginPath();
-          ctx.arc(x, y, 1, 0, 2 * Math.PI);
+          ctx.arc(x, y, 2, 0, 2 * Math.PI);
           ctx.fill();
         });
       };

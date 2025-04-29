@@ -22,6 +22,7 @@ export async function loadModels(): Promise<ModelLoadingStatus> {
     // Load key facial points model
     try {
       console.log('Loading key facial points model...');
+      // Using model_keyfacial_architecture.json instead of model.json
       const keyfacialModel = await tf.loadLayersModel('/models/keyfacial/model_keyfacial_architecture.json');
       status.keyfacial = true;
       console.log('Key facial points model loaded successfully');
@@ -36,6 +37,7 @@ export async function loadModels(): Promise<ModelLoadingStatus> {
     // Load facial emotion model
     try {
       console.log('Loading facial emotion model...');
+      // Using model_facial_architecture.json for emotion detection
       const facialEmotionModel = await tf.loadLayersModel('/models/facial_emotion/model_facial_architecture.json');
       status.facialEmotion = true;
       console.log('Facial emotion model loaded successfully');
@@ -50,7 +52,7 @@ export async function loadModels(): Promise<ModelLoadingStatus> {
     // For speech emotion detection, we'll need to load multiple files for the ensemble model
     try {
       console.log('Loading speech emotion MLP model...');
-      // Correcting the path to match the model_mlp_architecture.json file
+      // Using model_mlp_architecture.json for MLP model
       const mlpModel = await tf.loadLayersModel('/models/speech_emotion/model_mlp_architecture.json');
       status.speechEmotion = true;
       console.log('Speech emotion MLP model loaded successfully');
@@ -161,6 +163,7 @@ export async function predictFacialKeypoints(imageData: string): Promise<number[
     }
     
     for (let i = 0; i < 30; i += 2) {
+      // Scale to fit the canvas size (96x96)
       keypoints.push([flatKeypoints[i] * 96, flatKeypoints[i + 1] * 96]);
     }
     
