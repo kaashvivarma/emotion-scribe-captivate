@@ -14,7 +14,6 @@ const queryClient = new QueryClient();
 
 const App = () => {
   const [modelStatus, setModelStatus] = useState<ModelLoadingStatus>({
-    keyfacial: false,
     facialEmotion: false,
     speechEmotion: false,
     isLoading: true,
@@ -33,7 +32,7 @@ const App = () => {
             description: status.error,
             variant: "destructive",
           });
-        } else if (status.keyfacial && status.facialEmotion && status.speechEmotion) {
+        } else if (status.facialEmotion && status.speechEmotion) {
           toast({
             title: "Models Loaded",
             description: "All required models have been loaded successfully.",
