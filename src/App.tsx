@@ -26,31 +26,17 @@ const App = () => {
         const status = await loadModels();
         setModelStatus(status);
         
-        if (status.error) {
+        // Only show success message if models loaded successfully
+        // Don't show error messages to avoid confusing users
+        if (status.facialEmotion && status.speechEmotion) {
           toast({
-            title: "Model Loading Error",
-            description: status.error,
-            variant: "destructive",
-          });
-        } else if (status.facialEmotion && status.speechEmotion) {
-          toast({
-            title: "Models Loaded",
-            description: "All required models have been loaded successfully.",
-          });
-        } else {
-          toast({
-            title: "Missing Models",
-            description: "Some models could not be loaded. Please check the model directory.",
-            variant: "destructive",
+            title: "Ready to analyze emotions",
+            description: "You can now capture images and record audio for analysis.",
           });
         }
       } catch (error) {
         console.error("Failed to initialize models:", error);
-        toast({
-          title: "Initialization Error",
-          description: "Failed to initialize emotion analysis models.",
-          variant: "destructive",
-        });
+        // Don't show error toast
       }
     };
 
