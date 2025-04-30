@@ -10,7 +10,7 @@ import { Mic, Camera, Loader2 } from "lucide-react";
 import ImageCapture from "@/components/ImageCapture";
 import AudioRecorder from "@/components/AudioRecorder";
 import EmotionResults from "@/components/EmotionResults";
-import { predictFacialKeypoints, predictFacialEmotion, predictSpeechEmotion } from "@/utils/modelLoader";
+import { predictFacialEmotion, predictSpeechEmotion } from "@/utils/modelLoader";
 
 type EmotionData = {
   facial: string | null;
@@ -26,7 +26,6 @@ const Index = () => {
   const [recordingTime, setRecordingTime] = useState(0);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [facialKeypoints, setFacialKeypoints] = useState<number[][] | null>(null);
   const [emotionData, setEmotionData] = useState<EmotionData>({
     facial: null,
     speech: null,
@@ -40,7 +39,6 @@ const Index = () => {
 
   const handleImageCapture = (imageData: string) => {
     setCapturedImage(imageData);
-    setFacialKeypoints(null); // Reset keypoints when capturing a new image
     // Don't analyze immediately, wait for the user to press the analyze button
   };
 
@@ -61,7 +59,6 @@ const Index = () => {
         speech: null,
       },
     });
-    setFacialKeypoints(null);
   };
 
   const handleAnalyzeData = async () => {
@@ -87,21 +84,6 @@ const Index = () => {
           speech: null,
         },
       };
-      
-      // Get facial keypoints from the model
-      try {
-        const keypoints = await predictFacialKeypoints(capturedImage);
-        setFacialKeypoints(keypoints);
-        console.log("Facial keypoints detected:", keypoints);
-      } catch (error) {
-        console.error("Error detecting facial keypoints:", error);
-        toast({
-          title: "Keypoint detection failed",
-          description: "Could not detect facial keypoints. Please try again with a clearer image.",
-          variant: "destructive",
-        });
-        hasErrors = true;
-      }
       
       // Get facial emotion from the model
       try {
@@ -207,7 +189,6 @@ const Index = () => {
                 <ImageCapture 
                   onCapture={handleImageCapture} 
                   capturedImage={capturedImage}
-                  facialKeypoints={facialKeypoints}
                 />
               </Card>
 
@@ -274,39 +255,10 @@ const Index = () => {
           <TabsContent value="results">
             <EmotionResults 
               emotionData={emotionData}
-              facialKeypoints={facialKeypoints}
               capturedImage={capturedImage}
             />
           </TabsContent>
         </Tabs>
-      </div>
-      
-      <div className="container max-w-5xl py-8">
-        <div className="bg-black/20 rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Model Upload Instructions</h2>
-          <p className="mb-3">Please add your trained models to the following directory structure in the public folder:</p>
-          <pre className="bg-black/40 p-4 rounded-lg overflow-auto text-sm mb-6">
-{`public/models/
-|
-|_keyfacial/
-|   |_best_model.h5
-|   |_model_keyfacial_architecture.json
-|
-|_facial_emotion/
-|   |_facial.weights.h5
-|   |_model_facial_architecture.json
-|
-|_speech_emotion/
-    |_mlp_model.weights.h5
-    |_mlp_mlp_architecture.json
-    |_xgb_model.json
-    |_stdscaler.pkl
-    |_mood_encode.pkl`}
-          </pre>
-          <p className="text-muted-foreground text-sm">
-            After uploading your models to the public folder, the application will attempt to load them automatically.
-          </p>
-        </div>
       </div>
     </div>
   );

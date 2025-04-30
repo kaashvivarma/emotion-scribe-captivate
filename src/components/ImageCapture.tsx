@@ -6,13 +6,11 @@ import { Camera, RefreshCw } from "lucide-react";
 interface ImageCaptureProps {
   onCapture: (imageData: string) => void;
   capturedImage: string | null;
-  facialKeypoints: number[][] | null;
 }
 
 const ImageCapture: React.FC<ImageCaptureProps> = ({ 
   onCapture, 
-  capturedImage,
-  facialKeypoints
+  capturedImage
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -73,28 +71,6 @@ const ImageCapture: React.FC<ImageCaptureProps> = ({
     onCapture("");
   };
 
-  const drawFacialKeypoints = (ctx: CanvasRenderingContext2D) => {
-    if (!facialKeypoints || !facialKeypoints.length) return;
-    
-    // Scale factor - if the canvas is being displayed at a different size than its internal dimensions
-    const scaleX = ctx.canvas.clientWidth / ctx.canvas.width;
-    const scaleY = ctx.canvas.clientHeight / ctx.canvas.height;
-    
-    ctx.save();
-    ctx.strokeStyle = '#4ade80'; // Green color
-    ctx.fillStyle = '#4ade80';
-    ctx.lineWidth = 2;
-    
-    // Draw only the dots for keypoints - no lines connecting them
-    facialKeypoints.forEach(([x, y]) => {
-      ctx.beginPath();
-      ctx.arc(x, y, 3, 0, 2 * Math.PI);
-      ctx.fill();
-    });
-    
-    ctx.restore();
-  };
-
   useEffect(() => {
     if (capturedImage && canvasRef.current) {
       const canvas = canvasRef.current;
@@ -108,19 +84,11 @@ const ImageCapture: React.FC<ImageCaptureProps> = ({
           
           // Draw the captured image
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          
-          // If we have keypoints, draw them
-          if (facialKeypoints && facialKeypoints.length > 0) {
-            console.log("Drawing facial keypoints:", facialKeypoints);
-            drawFacialKeypoints(ctx);
-          } else {
-            console.log("No facial keypoints to draw");
-          }
         };
         img.src = capturedImage;
       }
     }
-  }, [capturedImage, facialKeypoints]);
+  }, [capturedImage]);
 
   return (
     <div className="flex flex-col items-center">

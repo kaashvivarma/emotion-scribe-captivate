@@ -1,8 +1,6 @@
-
 import * as tf from '@tensorflow/tfjs';
 
 export interface ModelLoadingStatus {
-  keyfacial: boolean;
   facialEmotion: boolean;
   speechEmotion: boolean;
   isLoading: boolean;
@@ -11,7 +9,6 @@ export interface ModelLoadingStatus {
 
 export async function loadModels(): Promise<ModelLoadingStatus> {
   const status: ModelLoadingStatus = {
-    keyfacial: false,
     facialEmotion: false,
     speechEmotion: false,
     isLoading: true,
@@ -19,25 +16,9 @@ export async function loadModels(): Promise<ModelLoadingStatus> {
   };
 
   try {
-    // Load key facial points model
-    try {
-      console.log('Loading key facial points model...');
-      // Using model_keyfacial_architecture.json instead of model.json
-      const keyfacialModel = await tf.loadLayersModel('/models/keyfacial/model_keyfacial_architecture.json');
-      status.keyfacial = true;
-      console.log('Key facial points model loaded successfully');
-      
-      // Store the model in window object for later use
-      (window as any).keyfacialModel = keyfacialModel;
-    } catch (error) {
-      console.error('Failed to load key facial points model:', error);
-      status.error = 'Failed to load key facial points model';
-    }
-    
     // Load facial emotion model
     try {
       console.log('Loading facial emotion model...');
-      // Using model_facial_architecture.json for emotion detection
       const facialEmotionModel = await tf.loadLayersModel('/models/facial_emotion/model_facial_architecture.json');
       status.facialEmotion = true;
       console.log('Facial emotion model loaded successfully');
@@ -46,13 +27,12 @@ export async function loadModels(): Promise<ModelLoadingStatus> {
       (window as any).facialEmotionModel = facialEmotionModel;
     } catch (error) {
       console.error('Failed to load facial emotion model:', error);
-      if (!status.error) status.error = 'Failed to load facial emotion model';
+      status.error = 'Failed to load facial emotion model';
     }
     
     // For speech emotion detection, we'll need to load multiple files for the ensemble model
     try {
       console.log('Loading speech emotion MLP model...');
-      // Using model_mlp_architecture.json for MLP model
       const mlpModel = await tf.loadLayersModel('/models/speech_emotion/model_mlp_architecture.json');
       status.speechEmotion = true;
       console.log('Speech emotion MLP model loaded successfully');
@@ -125,79 +105,6 @@ export async function extractAudioFeatures(audioBlob: Blob): Promise<number[]> {
     Math.random() * 0.1,       // shimmer
     Math.random() * 10 - 5,    // mfcc_mean
     Math.random() * 2 - 1      // sentiment_score
-  ];
-}
-
-export async function predictFacialKeypoints(imageData: string): Promise<number[][]> {
-  try {
-    const keyfacialModel = (window as any).keyfacialModel;
-    if (!keyfacialModel) {
-      console.error('Keyfacial model not loaded');
-      // Instead of throwing an error, return sample keypoints for visualization
-      return generateSampleKeypoints();
-    }
-    
-    const processedImage = await preprocessImage(imageData);
-    
-    // Make prediction
-    const prediction = await keyfacialModel.predict(processedImage) as tf.Tensor;
-    
-    // Convert prediction to array
-    const keypointsArray = await prediction.array();
-    
-    // Format keypoints as pairs of [x, y] coordinates
-    // Assuming the model outputs a flat array of 30 values (15 pairs of x,y coordinates)
-    const keypoints: number[][] = [];
-    
-    // Check if prediction has the expected format
-    if (!keypointsArray || !keypointsArray[0]) {
-      console.error("Unexpected keypoints prediction format:", keypointsArray);
-      return generateSampleKeypoints();
-    }
-    
-    // Ensure we have 30 values for 15 keypoints
-    const flatKeypoints = keypointsArray[0];
-    if (flatKeypoints.length < 30) {
-      console.error("Keypoints prediction has insufficient values:", flatKeypoints.length);
-      return generateSampleKeypoints();
-    }
-    
-    for (let i = 0; i < 30; i += 2) {
-      // Scale to fit the canvas size (96x96)
-      keypoints.push([flatKeypoints[i] * 96, flatKeypoints[i + 1] * 96]);
-    }
-    
-    console.log("Successfully processed keypoints:", keypoints);
-    return keypoints;
-  } catch (error) {
-    console.error('Error predicting facial keypoints:', error);
-    return generateSampleKeypoints();
-  }
-}
-
-// Generate sample keypoints for fallback visualization
-function generateSampleKeypoints(): number[][] {
-  // Create a basic face shape with 15 keypoints
-  const centerX = 48;
-  const centerY = 48;
-  
-  // Basic face shape (simplified)
-  return [
-    [centerX - 15, centerY - 15],  // Left eye
-    [centerX + 15, centerY - 15],  // Right eye
-    [centerX, centerY],            // Nose
-    [centerX - 10, centerY + 15],  // Left mouth corner
-    [centerX + 10, centerY + 15],  // Right mouth corner
-    [centerX - 20, centerY - 5],   // Left eyebrow
-    [centerX + 20, centerY - 5],   // Right eyebrow
-    [centerX, centerY + 10],       // Upper lip
-    [centerX, centerY + 20],       // Lower lip
-    [centerX - 25, centerY],       // Left cheek
-    [centerX + 25, centerY],       // Right cheek
-    [centerX - 15, centerY - 25],  // Left forehead
-    [centerX + 15, centerY - 25],  // Right forehead
-    [centerX - 15, centerY + 25],  // Left jaw
-    [centerX + 15, centerY + 25],  // Right jaw
   ];
 }
 

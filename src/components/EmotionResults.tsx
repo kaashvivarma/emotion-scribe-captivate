@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -14,13 +15,11 @@ interface EmotionResultsProps {
       speech: number | null;
     };
   };
-  facialKeypoints: number[][] | null;
   capturedImage: string | null;
 }
 
 const EmotionResults: React.FC<EmotionResultsProps> = ({
   emotionData,
-  facialKeypoints,
   capturedImage,
 }) => {
   const getEmotionColor = (emotion: string | null) => {
@@ -54,49 +53,6 @@ const EmotionResults: React.FC<EmotionResultsProps> = ({
   };
 
   const hasResults = emotionData.facial !== null || emotionData.speech !== null;
-
-  // Draw facial keypoints on a canvas when it's available
-  const drawKeypoints = () => {
-    if (!capturedImage || !facialKeypoints || facialKeypoints.length === 0) {
-      return null;
-    }
-    
-    const canvasRef = React.useRef<HTMLCanvasElement>(null);
-    
-    React.useEffect(() => {
-      if (!canvasRef.current || !capturedImage) return;
-      
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) return;
-      
-      const img = new Image();
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        
-        // Draw only points, no lines
-        ctx.fillStyle = '#4ade80'; // Green color
-        
-        // Draw points
-        facialKeypoints.forEach(([x, y]) => {
-          ctx.beginPath();
-          ctx.arc(x, y, 2, 0, 2 * Math.PI);
-          ctx.fill();
-        });
-      };
-      img.src = capturedImage;
-    }, [capturedImage, facialKeypoints]);
-    
-    return (
-      <canvas 
-        ref={canvasRef} 
-        width={96} 
-        height={96} 
-        className="w-full h-full"
-      />
-    );
-  };
 
   if (!hasResults) {
     return (
@@ -141,11 +97,14 @@ const EmotionResults: React.FC<EmotionResultsProps> = ({
                 </AlertDescription>
               </Alert>
               
-              <div className="mt-6">
-                <h4 className="text-sm font-semibold mb-2">Facial Keypoints (15 points)</h4>
-                <div className="bg-black rounded-lg relative overflow-hidden w-full aspect-square">
-                  {drawKeypoints()}
-                </div>
+              <div className="mt-6 bg-black rounded-lg relative overflow-hidden w-full aspect-square">
+                {capturedImage && (
+                  <img 
+                    src={capturedImage} 
+                    alt="Captured face" 
+                    className="w-full h-full object-cover"
+                  />
+                )}
               </div>
             </div>
           ) : (
